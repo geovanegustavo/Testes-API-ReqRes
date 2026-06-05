@@ -1,0 +1,212 @@
+{
+  "info": {
+    "_postman_id": "11496822-2166-44c5-9d8c-fdc6b8850cc1",
+    "name": "ReqRes - Automação Avançada",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "52626574",
+    "_collection_link": "https://go.postman.co/collection/52626574-11496822-2166-44c5-9d8c-fdc6b8850cc1?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Login",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// 1. Valida se o login deu certo\r",
+              "pm.test(\"Login efetuado com sucesso\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "// 2. Extrai o token do JSON que o servidor mandou\r",
+              "const resposta = pm.response.json();\r",
+              "const meuToken = resposta.token;\r",
+              "\r",
+              "// 3. Salva o token automaticamente em uma variável de ambiente chamada 'token_autenticacao'\r",
+              "pm.environment.set(\"token_autenticacao\", meuToken);"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "x-api-key",
+            "value": "{{api_key}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"email\": \"eve.holt@reqres.in\",\r\n    \"password\": \"cityslicka\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{url_base}}/login",
+          "host": [
+            "{{url_base}}"
+          ],
+          "path": [
+            "login"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Create users",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// 1. Valida se o login deu certo\r",
+              "pm.test(\"Usuário criado com sucesso - 201\", function () {\r",
+              "    pm.response.to.have.status(201);\r",
+              "});\r",
+              "\r",
+              "// 2. Teste de contrato\r",
+              "const schemaCadastro = {\r",
+              "    \"type\": \"object\",\r",
+              "    \"required\": [\"name\", \"job\", \"id\", \"createdAt\", \"_meta\"],\r",
+              "    \"properties\": {\r",
+              "        \"name\": { \"type\": \"string\" },\r",
+              "        \"job\": { \"type\": \"string\" },\r",
+              "        \"id\": { \"type\": \"string\" }, // Note que o ReqRes devolve o ID como texto/string\r",
+              "        \"createdAt\": { \"type\": \"string\" },\r",
+              "        \"_meta\": {\r",
+              "            \"type\": \"object\",\r",
+              "            \"required\": [\"powered_by\", \"variant\", \"context\"],\r",
+              "            \"properties\": {\r",
+              "                \"powered_by\": { \"type\": \"string\" },\r",
+              "                \"docs_url\": { \"type\": \"string\" },\r",
+              "                \"upgrade_url\": { \"type\": \"string\" },\r",
+              "                \"example_url\": { \"type\": \"string\" },\r",
+              "                \"variant\": { \"type\": \"string\" },\r",
+              "                \"message\": { \"type\": \"string\" },\r",
+              "                \"context\": { \"type\": \"string\" },\r",
+              "                \"cta\": {\r",
+              "                    \"type\": \"object\",\r",
+              "                    \"properties\": {\r",
+              "                        \"label\": { \"type\": \"string\" },\r",
+              "                        \"url\": { \"type\": \"string\" }\r",
+              "                    }\r",
+              "                }\r",
+              "            }\r",
+              "        }\r",
+              "    }\r",
+              "};\r",
+              "\r",
+              "const Ajv = require('ajv');\r",
+              "const ajv = new Ajv();\r",
+              "\r",
+              "pm.test(\"Contrato do JSON Schema está correto\", function () {\r",
+              "    var respostaJson = pm.response.json();\r",
+              "    pm.expect(ajv.validate(respostaJson, schemaCadastro)).to.be.true;\r",
+              "});\r",
+              "\r",
+              "// Validação de dados\r",
+              "pm.test(\"Validar integridade dos dados cadastrados\", function () {\r",
+              "    var respostaJson = pm.response.json();\r",
+              "    \r",
+              "    // Captura o valor atual da variável 'FullName'\r",
+              "    const nomeEsperado = pm.variables.get(\"FullName\");\r",
+              "    \r",
+              "    // Garante que a API salvou exatamente o nome dinâmico e o cargo enviado\r",
+              "    pm.expect(respostaJson.name).to.eql(nomeEsperado);\r",
+              "    pm.expect(respostaJson.job).to.eql(\"QA Engineer Senior\");\r",
+              "    \r",
+              "    // Garante que o ID e a data não vieram em branco\r",
+              "    pm.expect(respostaJson.id).to.not.be.empty;\r",
+              "    pm.expect(respostaJson.createdAt).to.not.be.empty;\r",
+              "    \r",
+              "    // Valida uma informação fixa do metadado da API\r",
+              "    pm.expect(respostaJson._meta.powered_by).to.eql(\"ReqRes\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "function firstName () {\r",
+              "    var firstName = [\"Miguel\", \"João\", \"Pedro\", \"Maria\", \"Ana\", \"Fernanda\", \"Rafael\", \"Juliana\", \"Lucas\", \"Camila\"];\r",
+              "\r",
+              "    var randomItem = firstName[Math.floor(Math.random() * firstName.length)];\r",
+              "\r",
+              "    return randomItem;\r",
+              "}\r",
+              "pm.environment.set(\"FirstName\", firstName());\r",
+              "\r",
+              "function lastName () {\r",
+              "    var lastName = [\"Santos\", \"Oliveira\", \"Costa\", \"Silva\", \"Ferreira\", \"Pereira\", \"Rodrigues\", \"Martins\"];\r",
+              "\r",
+              "    var randomItem = lastName[Math.floor(Math.random() * lastName.length)];\r",
+              "\r",
+              "    return randomItem;\r",
+              "}\r",
+              "pm.environment.set(\"LastName\", lastName());\r",
+              "\r",
+              "pm.environment.set( \"FullName\", pm.variables.get(\"FirstName\") + \" \" + pm.variables.get(\"LastName\") );"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token_autenticacao}}",
+            "type": "text"
+          },
+          {
+            "key": "x-api-key",
+            "value": "{{api_key}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"name\": \"{{FullName}}\",\r\n    \"job\": \"QA Engineer Senior\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{url_base}}/users",
+          "host": [
+            "{{url_base}}"
+          ],
+          "path": [
+            "users"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
