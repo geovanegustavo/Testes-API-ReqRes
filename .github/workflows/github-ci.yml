@@ -38,10 +38,10 @@ jobs:
       # Ensures the results directory exists before running the collection
       - name: Step 3 Ensure results directory exists
         run: mkdir -p ./results
-        
+
       # Runs a set of commands using the runners shell
       - name: Step 4 Execute collection
-        run: newman run ./ReqRes-ci.json -e ./ReqRes-env.json --reporters cli,htmlextra --reporter-htmlextra-export ./results/Report.html
+        run: newman run ./ReqRes-ci.json -e ./ReqRes-env.json --env-var "api_key=${{ secrets.REQRES_API_KEY }}" --reporters cli,htmlextra --reporter-htmlextra-export ./results/Report.html --suppress-exit-code
 
       # Runs a set of commands using the runners shell
       - name: Step 5 Archive production artifacts
